@@ -19,7 +19,8 @@ class RedisHa
   #                     :retry => :rotate,
   #                     :retry_interval => 30)
 
-  ## :retry => :rotate, default :once, means retry on all nodes once only, :rotate means repeat on all nodes.
+  ## :retry => :once, default :once, means retry on all nodes once only,
+  ## :retry => :rotate means repeat on all nodes.
 
   ## redis.ping
   ## redis.set :a, "a string"
@@ -39,7 +40,7 @@ class RedisHa
   ## proxy Redis instance
   def method_missing(method, *args)
     if @redis && @redis.respond_to?(method)
-      retry_redis_count = @nodes_left.size + 1 ## plus the first setup one
+      retry_redis_count = @nodes.size
       begin
         if args
           res = @redis.send(method, *args)
@@ -49,11 +50,10 @@ class RedisHa
       rescue Redis::CannotConnectError
         setup_new_redis
         retry_redis_count -= 1
-        puts retry_redis_count
-        retry if retry_redis_count >= 0
+        retry if retry_redis_count > 0
       end
     else
-      puts "No method #{method} for #{@reids}!"
+      puts "Error: No method #{method} for #{@reids}!"
     end
   end
 
@@ -66,7 +66,7 @@ private
         @nodes_left = @nodes.dup
         sleep @retry_link_interval
       elsif @retry_link == :once
-        puts "No more nodes to try! Set :retry => :rotate to retry forever."
+        puts "Error: No more nodes to try! Set :retry => :rotate to repeat."
         return
       end
     end
@@ -78,7 +78,7 @@ private
       begin
         @redis.ping
       rescue Redis::CannotConnectError
-        puts "Can not setup connection to redis server #{@next_node}!"
+        puts "Error: Can not setup connection to redis server #{@next_node}!"
       end
     end
   end
