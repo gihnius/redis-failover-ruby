@@ -15,11 +15,12 @@ redis = RedisHa.new act as the same as redis = Redis.new
                                  {:host=>'slave2.redis', :port => 8379}],
                       :retry => :rotate,
                       :retry_interval => 30)
+
+  # :retry => :rotate,  means retry repeat on all nodes.
+  # :retry => :once, default :once, means retry on all nodes once only.
+
+  redis.ping
+  redis.set :a, "a string"
+  redis.keys
+
 ```
-
-    :retry => :rotate,  means retry repeat on all nodes.
-    :retry => :once, default :once, means retry on all nodes once only.
-
-    `redis.ping`
-    `redis.set :a, "a string"`
-    `redis.keys`
