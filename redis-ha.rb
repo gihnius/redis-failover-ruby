@@ -3,29 +3,6 @@ require 'redis'
 
 class RedisHa
 
-  ## a redis automatic failover solution
-
-  ## redis = RedisHa.new act as the same as redis = Redis.new
-  ## for multi nodes redis (master + slaves)
-
-  # redis = RedisHa.new(:nodes => [
-  #                                {:host=>'master.redis', :port => 6379},
-  #                                {:host => 'slave1.redis',:port => 7379},
-  #                                {:host=>'slave2.redis', :port => 8379}])
-  # redis = RedisHa.new(:nodes => [
-  #                                {:host=>'master.redis', :port => 6379},
-  #                                {:host => 'slave1.redis',:port => 7379},
-  #                                {:host=>'slave2.redis', :port => 8379}],
-  #                     :retry => :rotate,
-  #                     :retry_interval => 30)
-
-  ## :retry => :once, default :once, means retry on all nodes once only,
-  ## :retry => :rotate means repeat on all nodes.
-
-  ## redis.ping
-  ## redis.set :a, "a string"
-  ## redis.keys
-
   def initialize(opts={})
     @nodes = opts.delete(:nodes) || [ {:host => '127.0.0.1', :port => 6379} ]
     @retry_link = opts.delete(:retry) || :once
@@ -60,6 +37,7 @@ class RedisHa
 
 private
 
+  ## try to connect to each node
   def setup_new_redis
     if @nodes_left.size == 0
       if @retry_link == :rotate
