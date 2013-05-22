@@ -1,5 +1,6 @@
 
 require 'redis'
+require 'logger'
 
 class RedisHa
 
@@ -10,6 +11,9 @@ class RedisHa
     @nodes_left = @nodes.dup
     @next_node = {}
     @redis = nil
+    logfile = opts.delete(:log) || STDOUT
+    @logger = Logger.new(logfile)
+    @logger.level = Logger::DEBUG
     @config = opts
     setup_new_redis
   end
@@ -30,7 +34,7 @@ class RedisHa
         retry if retry_redis_count > 0
       end
     else
-      puts "Error: No method #{method} for #{@reids}!"
+      @logger.warn("[RedisHa] Error: No method #{method} for #{@reids}!")
     end
   end
 
@@ -44,19 +48,19 @@ private
         @nodes_left = @nodes.dup
         sleep @retry_link_interval
       elsif @retry_link == :once
-        puts "Error: No more nodes to try! Set :retry => :rotate to repeat."
+        @logger.warn("[RedisHa] Error: No more nodes to try! Set :retry => :rotate to repeat.")
         return
       end
     end
     @next_node = @nodes_left.shift
-    puts "Setting up redis connection from server: #{@next_node}"
+    @logger.info("[RedisHa] Setting up redis connection from server: #{@next_node}")
     @config.merge!(@next_node)
     @redis = Redis.new(@config)
     if @redis
       begin
         @redis.ping
       rescue Redis::CannotConnectError
-        puts "Error: Can not setup connection to redis server #{@next_node}!"
+        @logger.warn("[RedisHa] Error: Can not setup connection to redis server #{@next_node}!")
       end
     end
   end

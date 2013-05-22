@@ -19,6 +19,9 @@ redis = RedisHa.new act as the same as redis = Redis.new
   # :retry => :rotate,  means retry repeat on all nodes.
   # :retry => :once, default :once, means retry on all nodes once only.
 
+  ## log to stdout default
+  redis = RedisHa.new(:log => '/var/log/redis_opts.log')
+
   redis.ping
   redis.set :a, "a string"
   redis.keys
